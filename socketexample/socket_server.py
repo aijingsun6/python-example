@@ -1,3 +1,4 @@
+import dataclasses
 import sys
 import logging
 import socket
@@ -52,17 +53,31 @@ class SocketServer(object):
         except Exception as ex:
             logger.error("{} {} {}".format(ex, type(ex), traceback.format_exc()))
 
-    def action(self, data) -> dict:
+    def action(self, data: dict, client: socket.socket) -> bool:
         action = data.get("action")
+        loop = True
         if action == "ping":
-            return {"action": "pong"}
-        return data
+            self.send_data(client=client, data={"action": "pong"})
+        elif action == "close":
+            logger.info("close {}".format(client))
+            client.shutdown(socket.SHUT_RDWR)
+            client.close()
+            loop = False
+        elif action == "shutdown":
+            how = data.get("how", socket.SHUT_RDWR)
+            logger.info("shutdown {} {}".format(client, how))
+            client.shutdown(how)
+        else:
+            self.send_data(client=client, data=data)
+        return loop
 
     def handle(self, client: socket.socket):
-        while True:
+        logger.info("handle {} start".format(client))
+        loop = True
+        while loop and client.fileno() > 0:
             data = self.recv_data(client=client)
-            reply = self.action(data)
-            self.send_data(client=client, data=reply)
+            loop = self.action(data=data, client=client)
+        logger.info("handle {} end".format(client))
 
     def start(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -70,9 +85,9 @@ class SocketServer(object):
         self.sock.listen(self.backlog)
         logger.info("bind {}".format(self.port))
         while True:
-            (clientsocket, address) = self.sock.accept()
-            logger.info("recv new client {} {}".format(clientsocket, address))
-            self.executor.submit(self.handle, clientsocket)
+            (client, address) = self.sock.accept()
+            logger.info("recv new client {} {}".format(client, address))
+            self.executor.submit(self.handle, client)
 
 
 if __name__ == "__main__":

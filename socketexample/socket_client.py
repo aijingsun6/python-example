@@ -3,8 +3,8 @@ import logging
 import socket
 import struct
 import json
-import time
 import traceback
+import time
 from concurrent.futures import ThreadPoolExecutor
 
 logging.basicConfig(stream=sys.stdout,
@@ -17,10 +17,16 @@ class SocketClient(object):
     sock: socket.socket
     addr: str
     port: int
+    timeout: int
 
-    def __init__(self, addr, port):
+    def __init__(self, addr, port, timeout=None):
         self.addr = addr
         self.port = port
+        self.timeout = timeout
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if timeout is not None:
+            self.sock.settimeout(timeout)
+        self.sock.connect((self.addr, self.port))
 
     def send_data(self, data: any):
         try:
@@ -46,18 +52,41 @@ class SocketClient(object):
         except Exception as ex:
             logger.error("{} {} {}".format(ex, type(ex), traceback.format_exc()))
 
-    def start(self):
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect((self.addr, self.port))
-
     def stop(self, how):
         self.sock.shutdown(how)
         self.sock.close()
 
 
-if __name__ == "__main__":
+def ok():
     client = SocketClient(addr="127.0.0.1", port=10080)
-    client.start()
     client.send_data({"action": "ping"})
-    client.stop(socket.SHUT_RD)
     client.recv_data()
+    client.send_data({"action": "close"})
+    client.recv_data()
+    client.stop(socket.SHUT_RDWR)
+
+
+def send_shutdown():
+    client = SocketClient(addr="127.0.0.1", port=10080)
+    client.send_data({"action": "ping"})
+    client.recv_data()
+    client.sock.shutdown(socket.SHUT_RDWR)
+    time.sleep(10)
+
+
+def close_send():
+    client = SocketClient(addr="127.0.0.1", port=10080, timeout=1)
+    client.send_data({"action": "close"})
+    logger.info("{}".format(client.sock.fileno()))
+    client.recv_data()
+    client.send_data({"action": "ping"})
+    client.recv_data()
+
+
+if __name__ == "__main__":
+    try:
+        # ok()
+        # send_shutdown()
+        close_send()
+    except Exception as ex:
+        logger.error("{} {} {}".format(ex, type(ex), traceback.format_exc()))
