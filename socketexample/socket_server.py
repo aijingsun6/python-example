@@ -67,6 +67,10 @@ class SocketServer(object):
             how = data.get("how", socket.SHUT_RDWR)
             logger.info("shutdown {} {}".format(client, how))
             client.shutdown(how)
+        elif action == "timeout":
+            timeout = data.get("timeout", None)
+            logger.info("timeout {} {}".format(client, timeout))
+            client.settimeout(timeout)
         else:
             self.send_data(client=client, data=data)
         return loop
@@ -84,9 +88,11 @@ class SocketServer(object):
         self.sock.bind((self.addr, self.port))
         self.sock.listen(self.backlog)
         logger.info("bind {}".format(self.port))
+        idx = 1
         while True:
             (client, address) = self.sock.accept()
-            logger.info("recv new client {} {}".format(client, address))
+            logger.info("recv new client {} {} {}".format(idx, client, address))
+            idx += 1
             self.executor.submit(self.handle, client)
 
 

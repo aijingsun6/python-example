@@ -65,6 +65,15 @@ def ok():
     client.recv_data()
     client.stop(socket.SHUT_RDWR)
 
+def send_sleep_recv():
+    client = SocketClient(addr="127.0.0.1", port=10080)
+    client.send_data({"action": "ping"})
+    time.sleep(5)
+    client.recv_data()
+    time.sleep(5)
+    client.stop(socket.SHUT_RDWR)
+
+
 
 def send_shutdown():
     client = SocketClient(addr="127.0.0.1", port=10080)
@@ -73,6 +82,13 @@ def send_shutdown():
     client.sock.shutdown(socket.SHUT_RDWR)
     time.sleep(10)
 
+def send_shutdown_send():
+    client = SocketClient(addr="127.0.0.1", port=10080)
+    client.send_data({"action": "ping"})
+    client.recv_data()
+    client.sock.shutdown(socket.SHUT_RDWR)
+    client.send_data({"action": "ping"})
+    client.recv_data()
 
 def close_send():
     client = SocketClient(addr="127.0.0.1", port=10080, timeout=1)
@@ -83,10 +99,33 @@ def close_send():
     client.recv_data()
 
 
+def send_timeout_send():
+    client = SocketClient(addr="127.0.0.1", port=10080)
+    client.send_data({"action": "ping"})
+    client.recv_data()
+    client.send_data({"action": "timeout", "timeout": 2})
+    time.sleep(5)
+    client.send_data({"action": "ping"})
+    client.recv_data()
+
+
+def conn_too_much():
+    for i in range(20):
+        logger.info("start {} client".format(i+1))
+        client = SocketClient(addr="127.0.0.1", port=10080)
+        client.send_data({"action": "ping"})
+        client.recv_data()
+
+
 if __name__ == "__main__":
     try:
         # ok()
         # send_shutdown()
-        close_send()
+        # close_send()
+        # send_timeout_send()
+        # conn_too_much()
+        # send_shutdown_send()
+        send_sleep_recv()
+
     except Exception as ex:
         logger.error("{} {} {}".format(ex, type(ex), traceback.format_exc()))
