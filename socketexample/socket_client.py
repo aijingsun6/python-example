@@ -119,13 +119,13 @@ def conn_too_much():
 
 if __name__ == "__main__":
     try:
-        # ok()
+        ok()
         # send_shutdown()
         # close_send()
         # send_timeout_send()
         # conn_too_much()
         # send_shutdown_send()
-        send_sleep_recv()
+        # send_sleep_recv()
 
     except Exception as ex:
         logger.error("{} {} {}".format(ex, type(ex), traceback.format_exc()))

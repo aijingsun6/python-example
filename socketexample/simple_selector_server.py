@@ -2,66 +2,54 @@ import selectors
 import socket
 import logging
 import sys
-from collections import deque
 
 logging.basicConfig(stream=sys.stdout,
                     level=logging.INFO,
                     format="%(asctime)s %(name)s %(threadName)s %(levelname)s %(lineno)d %(message)s")
 logger = logging.getLogger(__name__)
 
-sel = selectors.DefaultSelector()
-logger.info("sel {} {}".format(sel, type(sel)))
+accept_selector = selectors.DefaultSelector()
 
-send_data_map: dict[any, deque] = dict()
+logger.info("accept_selector {}".format(accept_selector))
+
+read_selector = selectors.DefaultSelector()
+
+logger.info("read_selector {}".format(read_selector))
 
 
 def read(conn, mask):
     data = conn.recv(1000)  # 应当已就绪
     if data:
-        if conn not in send_data_map:
-            send_data_map[conn] = deque()
-        send_data_map[conn].append(data)
+        logger.info("send {} ,to {}".format(data, conn))
+        conn.sendall(data)
     else:
         logger.info("closing {} ,mask {}".format(conn, mask))
-        sel.unregister(conn)
+        read_selector.unregister(conn)
         conn.close()
-
-
-def write(conn, mask):
-    logger.info("write {} {}".format(conn, mask))
-    if conn in send_data_map:
-        q = send_data_map[conn]
-        while len(q) > 0:
-            data = q.popleft()
-            logger.info("echo {} to {} ,mask {}".format(data, conn, mask))
-            conn.sendall(data)
 
 
 def accept(sock, mask):
     conn, addr = sock.accept()  # 应当已就绪
     logger.info("accepted {} from {} mark {}".format(conn, addr, mask))
     conn.setblocking(False)
-    sel.register(conn, selectors.EVENT_READ | selectors.EVENT_WRITE, handle)
-
-
-def handle(conn, mask):
-    if mask & selectors.EVENT_READ > 0:
-        read(conn, mask)
-
-    if mask & selectors.EVENT_WRITE > 0:
-        write(conn, mask)
+    read_selector.register(conn, selectors.EVENT_READ, read)
 
 
 sock = socket.socket()
 sock.bind(('localhost', 10080))
 sock.listen(100)
 sock.setblocking(False)
-sel.register(sock, selectors.EVENT_READ, accept)
+accept_selector.register(sock, selectors.EVENT_READ, accept)
+logger.info("server sock {}".format(sock))
 
 while True:
-    events = sel.select()
+    events = accept_selector.select(timeout=1)
+    if len(read_selector.get_map()) > 0:
+        ee = events_read = read_selector.select(timeout=1)
+        events += ee
+
     for key, mask in events:
-        logger.info("key {} mask {}".format(key, mask))
+        # logger.info("key {} mask {}".format(key, mask))
         callback = key.data
-        logger.info("callback {}".format(callback))
+        # logger.info("callback {}".format(callback))
         callback(key.fileobj, mask)
