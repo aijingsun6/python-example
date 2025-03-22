@@ -15,3 +15,13 @@ f2.inc_age()
 f2.age = 20
 print(f1)
 print(f2)
+
+
+class A(object):
+    def __new__(cls, *args, **kwargs):
+        print(f"__new__ {args} {kwargs}")
+        return super.__new__(cls)
+
+
+a = A()
+
