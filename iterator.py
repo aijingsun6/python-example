@@ -20,25 +20,32 @@ class MyIterator:
         self.cursor = 0
 
     def __iter__(self):
+        print('__iter__ called')
         self.cursor = 0
         return self
 
-    def add_value(self,v):
-        self.data.append(v)
-
     def __next__(self):
+        print('__next__ called')
         if self.cursor < len(self.data):
             value = self.data[self.cursor]
             self.cursor += 1
             return value
+        print('raise StopIteration')
         raise StopIteration()
 
 
 if __name__ == '__main__':
+
+    a = [1,2,3]
+    print(type(a))
+    b = iter(a)
+    print(type(b))
+    for e in b:
+        print(e)
+
     it = MyIterator([1,2,3])
     for e in it:
         print(e)
-    print(it.cursor)
     its = iter(it)
     while True:
         try:
