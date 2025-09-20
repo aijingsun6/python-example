@@ -1,12 +1,4 @@
-from bytesexample import a
-
-a()
-
-
-def mock_a():
-    print('b')
-
-import bytesexample
-bytesexample.a = mock_a
-
-bytesexample.a()
+import my_module
+import inspect
+import typing
+print(inspect.get_annotations(my_module))
