@@ -11,27 +11,23 @@ class P1161:
     def maxLevelSum(self, root: Optional[TreeNode]) -> int:
         if root is None:
             return 0
-        from queue import Queue
         max_sum = root.val
         max_depth = 1
         depth = 1
-        q: Queue[TreeNode] = Queue()
-        q.put(root)
-        while not q.empty():
-            size = q.qsize()
-            sum = 0
-            for i in range(size):
-                n = q.get()
-                sum += n.val
+        q: list[TreeNode] = [root]
+        while len(q) > 0:
+            s2 = []
+            s = 0
+            for n in q:
+                s += n.val
                 if n.left is not None:
-                    q.put(n.left)
+                    s2.append(n.left)
                 if n.right is not None:
-                    q.put(n.right)
-
-            if sum > max_sum:
+                    s2.append(n.right)
+            if s > max_sum:
                 max_depth = depth
-                max_sum = sum
-
+                max_sum = s
+            q = s2
             depth += 1
         return max_depth
 
