@@ -1,0 +1,23 @@
+from typing import List
+
+class P1458:
+    def maxDotProduct(self, nums1: List[int], nums2: List[int]) -> int:
+        size_1 = len(nums1)
+        size_2 = len(nums2)
+        dp: list[list[int]] = []
+
+        # init dp[0]
+        v_max = 0
+        line = []
+        for v in nums2:
+            v_max = max(v_max, nums1[0] * v)
+            line.append(v_max)
+        dp.append(line)
+
+        # push dp
+
+        for idx_1 in range(1, size_1):
+            v_max = dp[idx_1-1][size_2-1]
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+
+
